@@ -1,7 +1,3 @@
-if (SERVER) then
-    return
-end
-
 local addon_name = "Developer Tool Kit"
 local vector_zero = Vector( 0, 0, 0 )
 local oldhooks = dev_tools and dev_tools.GetHooks and dev_tools.GetHooks() or nil
