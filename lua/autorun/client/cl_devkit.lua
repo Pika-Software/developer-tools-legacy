@@ -96,8 +96,6 @@ function Start()
         local center = nil
         local color = nil
 
-        local health, maxhealth, health_frac = nil, nil, nil
-
         local axis_len = ScreenScale( CreateClientConVar( "dev_axis_len", "3", true, false, " - Original axis length.", 0, 25 ):GetInt() )
         cvars.AddChangeCallback("dev_axis_len", function( name, old, new ) axis_len =  ScreenScale( tonumber( new ) or 3 ) end, addon_name)
 
@@ -151,29 +149,18 @@ function Start()
                     table.insert( all_data, { "Angles", FormatVector( ang ) } )
                 end
 
-                if (ent.Health == nil) or (ent.GetMaxHealth == nil) then
-                    health = nil
-                    maxhealth = nil
-                    health_frac = nil
-                else
-                    health = ent:Health()
-                    if health > 0 then
-                        if ent.GetMaxHealth == nil then
-                            maxhealth = nil
-                            health_frac = nil
-                        else
-                            maxhealth = ent:GetMaxHealth()
-                            health_frac = health / maxhealth
-                        end
-                    else
-                        health = nil
-                        maxhealth = nil
-                        health_frac = nil
-                    end
+                if ent.GetVelocity ~= nil then
+                    local vel = ent:GetVelocity()
+                    table.insert( all_data, { "Velocity", FormatVector( vel ) } )
+                    table.insert( all_data, { "Speed", round( vel:Length(), 2 ) } )
                 end
 
-                if (health_frac ~= nil) then
-                    table.insert( all_data, { "Health", health_frac * 100 .. "% (" .. health .. "/" .. maxhealth .. ")" } )
+                if (ent.Health ~= nil) and (ent.GetMaxHealth ~= nil) then
+                    local health = ent:Health()
+                    if health > 0 then
+                        local maxhealth = ent:GetMaxHealth()
+                        table.insert( all_data, { "Health", (health / maxhealth) * 100 .. "% (" .. health .. "/" .. maxhealth .. ")" } )
+                    end
                 end
 
                 if ent.GetColor == nil then
@@ -239,7 +226,6 @@ function Start()
         local green = Color( 0, 255, 0 )
         local blue = Color( 0, 0, 255 )
         local grey = Color( 50, 50, 50 )
-        local mat = Material( "editor/wireframe" )
 
         Hook( "HUDPaint", function()
             local counter = 0
