@@ -29,7 +29,7 @@ function ClearHooks()
 end
 
 local round = math.Round
-local light_grey = Color( 255, 255, 255 )
+local light_grey = Color( 200, 200, 200 )
 
 function ConsoleLine( key, value, color )
     MsgC( HSVToColor( math.random( 360 ) % 360, 0.6, 1 ), key, ": ", color or light_grey, value, "\n" )
@@ -123,6 +123,18 @@ function Start()
 
             local ent = ply:GetEyeTrace().Entity
             if (ent ~= nil) and (ent ~= NULL) then
+                if ent.EntIndex ~= nil then
+                    table.insert( all_data, { "Entity Index", ent:EntIndex() } )
+                end
+
+                if ent.GetClass ~= nil then
+                    table.insert( all_data, { "Class", ent:GetClass() } )
+                end
+
+                if ent.GetModel ~= nil then
+                    table.insert( all_data, { "Model", ent:GetModel() } )
+                end
+
                 if ent.GetPos == nil then
                     pos = nil
                 else
@@ -199,6 +211,7 @@ function Start()
         local red = Color( 255, 0, 0 )
         local green = Color( 0, 255, 0 )
         local blue = Color( 0, 0, 255 )
+        local grey = Color( 50, 50, 50 )
         local mat = Material( "editor/wireframe" )
 
         Hook( "HUDPaint", function()
@@ -210,6 +223,7 @@ function Start()
                 surface.SetFont( "DevKit_Font" )
                 local tw, th = surface.GetTextSize( text )
 
+                surface.SetDrawColor( grey )
                 surface.DrawRect( 10, 10 + counter * th, tw, th )
                 draw.DrawText( text, "DevKit_Font", 10, 10 + counter * th, color_white, TEXT_ALIGN_LEFT )
 
