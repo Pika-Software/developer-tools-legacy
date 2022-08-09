@@ -91,8 +91,7 @@ function Start()
         local ang = nil
         local all_data = {}
 
-        -- local mins, maxs = nil, nil
-        local cmins, cmaxs = nil, nil
+        local mins, maxs = nil, nil
         local forward, left, up = nil, nil, nil
         local center = nil
         local color = nil
@@ -123,7 +122,7 @@ function Start()
             table.Empty( all_data )
 
             local ent = ply:GetEyeTrace().Entity
-            if (ent ~= nil) then
+            if (ent ~= nil) and (ent ~= NULL) then
                 if ent.GetPos == nil then
                     pos = nil
                 else
@@ -145,9 +144,17 @@ function Start()
                 end
 
                 if ent.GetCollisionBounds == nil then
-                    cmins, cmaxs = nil, nil
+                    mins, maxs = nil, nil
                 else
-                    cmins, cmaxs = ent:GetCollisionBounds()
+                    mins, maxs = ent:GetCollisionBounds()
+                end
+
+                if (mins == nil) and (maxs == nil) or (maxs - mins):Length() < 1 then
+                    if ent.GetRenderBounds == nil then
+                        mins, maxs = nil, nil
+                    else
+                        mins, maxs = ent:GetRenderBounds()
+                    end
                 end
 
                 if ent.OBBCenter == nil then
@@ -210,8 +217,8 @@ function Start()
 
             if (pos == nil) or (ang == nil) then return end
             cam.Start3D()
-                if (cmins ~= nil) and (cmaxs ~= nil) then
-                    render.DrawWireframeBox( pos, ang, cmins, cmaxs, color, true )
+                if (mins ~= nil) and (maxs ~= nil) then
+                    render.DrawWireframeBox( pos, ang, mins, maxs, color, true )
                 end
 
                 if (new_axis) then
