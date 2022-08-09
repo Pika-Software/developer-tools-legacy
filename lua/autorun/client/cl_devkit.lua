@@ -96,6 +96,8 @@ function Start()
         local center = nil
         local color = nil
 
+        local health, maxhealth, health_frac = nil, nil, nil
+
         local axis_len = ScreenScale( CreateClientConVar( "dev_axis_len", "3", true, false, " - Original axis length.", 0, 25 ):GetInt() )
         cvars.AddChangeCallback("dev_axis_len", function( name, old, new ) axis_len =  ScreenScale( tonumber( new ) or 3 ) end, addon_name)
 
@@ -147,6 +149,31 @@ function Start()
                 else
                     ang = ent:GetAngles()
                     table.insert( all_data, { "Angles", FormatVector( ang ) } )
+                end
+
+                if (ent.Health == nil) or (ent.GetMaxHealth == nil) then
+                    health = nil
+                    maxhealth = nil
+                    health_frac = nil
+                else
+                    health = ent:Health()
+                    if health > 0 then
+                        if ent.GetMaxHealth == nil then
+                            maxhealth = nil
+                            health_frac = nil
+                        else
+                            maxhealth = ent:GetMaxHealth()
+                            health_frac = health / maxhealth
+                        end
+                    else
+                        health = nil
+                        maxhealth = nil
+                        health_frac = nil
+                    end
+                end
+
+                if (health_frac ~= nil) then
+                    table.insert( all_data, { "Health", health_frac * 100 .. "% (" .. health .. "/" .. maxhealth .. ")" } )
                 end
 
                 if ent.GetColor == nil then
@@ -265,9 +292,40 @@ hook.Add("RenderScene", addon_name, function()
     cvars.AddChangeCallback( "dev_tools", function( name, old, new ) if tobool( new ) then Start() else Stop() end end)
 end)
 
-concommand.Add("dev_entity", function( ply )
-    local ent = ply:GetEyeTrace().Entity
+local prop_classes = {
+    ["prop_detail"] = true,
+    ["prop_static"] = true,
+    ["prop_physics"] = true,
+    ["prop_ragdoll"] = true,
+    ["prop_dynamic"] = true,
+    ["prop_physics_override"] = true,
+    ["prop_dynamic_override"] = true,
+    ["prop_physics_multiplayer"] = true
+}
+
+function GetType( ent )
+    local class = ent:GetClass()
+    if ent:IsVehicle() then
+        return "Vehicle"
+    elseif ent:IsWeapon() then
+        return "Weapon"
+    elseif ent:IsNPC() then
+        return "NPC"
+    elseif (class == "prop_effect") then
+        return "Effect"
+    elseif ent:IsRagdoll() then
+        return "Ragdoll"
+    elseif prop_classes[ class ] then
+        return "Prop"
+    end
+
+    return type( ent )
+end
+
+function ConsoleEntityInfo( ent )
+
     MsgN( "<---------------------------------" )
+    ConsoleLine( "Type", GetType( ent ) )
     ConsoleLine( "Index", ent:EntIndex() )
 
     local class = ent:GetClass()
@@ -283,15 +341,8 @@ concommand.Add("dev_entity", function( ply )
 
     ConsoleLine( "Valid", ent:IsValid() )
     ConsoleLine( "NoDraw", ent:GetNoDraw() )
-    ConsoleLine( "Ragdoll", ent:IsRagdoll() )
 
-    local isVehicle = ent:IsVehicle()
-    ConsoleLine( "Vehicle", isVehicle )
-
-    local isNPC = ent:IsNPC()
-    ConsoleLine( "NPC", isNPC )
-
-    if isVehicle then
+    if ent:IsVehicle() then
         local vehicle_class = ent:GetVehicleClass()
         ConsoleLine( "\nVehicle Class", vehicle_class )
 
@@ -300,13 +351,13 @@ concommand.Add("dev_entity", function( ply )
         ConsoleLine( "Name", language.GetPhrase( data.Name ) )
         ConsoleLine( "Information", language.GetPhrase( data.Information ) )
         ConsoleLine( "Author", data.Author )
-    elseif isNPC then
+    elseif ent:IsNPC() then
         local data = list.Get( "NPC" )[ class ]
         ConsoleLine( "\nName", language.GetPhrase( data.Name ) )
 
         local wep = ent:GetActiveWeapon()
         if IsValid( wep ) then
-            ConsoleLine( "Weapon", language.GetPhrase( wep:GetPrintName() or wep.PrintName or "Scripted Weapon" ) )
+            ConsoleLine( "Weapon", language.GetPhrase( wep:GetPrintName() or wep.PrintName or "Scripted Weapon" ) .. " (" .. wep:GetClass() .. ")" )
         else
             ConsoleLine( "Weapon", "false" )
         end
@@ -346,4 +397,40 @@ concommand.Add("dev_entity", function( ply )
     end
 
     MsgN( "--------------------------------->" )
+
+end
+
+concommand.Add("dev_entity", function( ply )
+    ConsoleEntityInfo( ply:GetEyeTrace().Entity )
+end)
+
+function ConsoleWeaponInfo( ent )
+    ConsoleEntityInfo( ent )
+end
+
+concommand.Add("dev_weapon", function( ply )
+    local tr = ply:GetEyeTrace()
+    local ent = tr.Entity
+    if IsValid( ent ) and ent:IsPlayer() or ent:IsNPC() then
+        ply = ent
+    end
+
+    local wep = ply:GetActiveWeapon()
+    if IsValid( wep ) then
+        ConsoleWeaponInfo( wep )
+    end
+end)
+
+concommand.Add("dev_weapons", function( ply )
+    local tr = ply:GetEyeTrace()
+    local ent = tr.Entity
+    if IsValid( ent ) and ent:IsPlayer() then
+        ply = ent
+    end
+
+    for num, wep in ipairs( ply:GetWeapons() ) do
+        Msg( num .. ". " )
+        ConsoleWeaponInfo( wep )
+        MsgN()
+    end
 end)
