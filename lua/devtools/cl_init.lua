@@ -166,6 +166,9 @@ function Start()
                     end
                 end
 
+                table.insert( all_data, "" )
+                table.insert( all_data, { "Player Speed", round( ply:GetVelocity():Length(), 2 ) } )
+
                 if ent.GetColor == nil then
                     color = nil
                 else
@@ -235,14 +238,15 @@ function Start()
             for num, data in ipairs( all_data ) do
                 counter = counter + 1
 
-                local text = data[1] .. ": " .. data[2]
-                surface.SetFont( "DevKit_Font" )
-                local tw, th = surface.GetTextSize( text )
+                if istable( data ) then
+                    local text = data[1] .. ": " .. data[2]
+                    surface.SetFont( "DevKit_Font" )
+                    local tw, th = surface.GetTextSize( text )
 
-                surface.SetDrawColor( grey )
-                surface.DrawRect( 10, 10 + counter * th, tw, th )
-                draw.DrawText( text, "DevKit_Font", 10, 10 + counter * th, color_white, TEXT_ALIGN_LEFT )
-
+                    surface.SetDrawColor( grey )
+                    surface.DrawRect( 10, 10 + counter * th, tw, th )
+                    draw.DrawText( text, "DevKit_Font", 10, 10 + counter * th, color_white, TEXT_ALIGN_LEFT )
+                end
             end
 
             if (pos == nil) or (ang == nil) then return end
