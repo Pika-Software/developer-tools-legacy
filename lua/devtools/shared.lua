@@ -19,7 +19,7 @@ do
         local start = SysTime()
         http.Fetch(url, function( body, size, headers, code )
             if (code == 200) or (code == 0) and isstring( body ) and size > 0 then
-                Log( "Web module %s downloaded succesfully, size %s KB, took %.4f seconds.", name, tostring( size / 1024 / 1024 ), SysTime() - start )
+                Log( "Web module %s downloaded succesfully, took %.4f seconds.", name, SysTime() - start )
                 local func = CompileString( body )
                 if isfunction(func) then
                     local ok, err = pcall( func )
