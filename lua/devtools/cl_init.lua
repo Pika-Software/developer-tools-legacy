@@ -33,6 +33,9 @@ local light_grey = Color( 200, 200, 200 )
 
 function ConsoleLine( key, value, color )
     MsgC( HSVToColor( math.random( 360 ) % 360, 0.6, 1 ), key, ": ", color or light_grey, value, "\n" )
+    timer.Create("Dev Tools - Finish Line", 0, 1, function()
+        MsgN()
+    end)
 end
 
 function FormatVector( vec )
@@ -390,10 +393,6 @@ concommand.Add("dev_entity", function( ply )
     ConsoleEntityInfo( ply:GetEyeTrace().Entity )
 end)
 
-function ConsoleWeaponInfo( ent )
-    ConsoleEntityInfo( ent )
-end
-
 concommand.Add("dev_weapon", function( ply )
     local tr = ply:GetEyeTrace()
     local ent = tr.Entity
@@ -403,7 +402,7 @@ concommand.Add("dev_weapon", function( ply )
 
     local wep = ply:GetActiveWeapon()
     if IsValid( wep ) then
-        ConsoleWeaponInfo( wep )
+        ConsoleEntityInfo( wep )
     end
 end)
 
@@ -416,7 +415,17 @@ concommand.Add("dev_weapons", function( ply )
 
     for num, wep in ipairs( ply:GetWeapons() ) do
         Msg( num .. ". " )
-        ConsoleWeaponInfo( wep )
+        ConsoleEntityInfo( wep )
         MsgN()
     end
+end)
+
+concommand.Add("dev_info", function()
+    ConsoleLine( "Title", "Dev Tools" )
+    ConsoleLine( "Version", "0.1.0" )
+    ConsoleLine( "Author", "PrikolMen:-b" )
+    ConsoleLine( "CurTime", string.FormattedTime( CurTime() / 60, "%02i:%02i:%02i" ) )
+    ConsoleLine( "SysTime", string.FormattedTime( SysTime() / 60, "%02i:%02i:%02i" ) )
+    ConsoleLine( "MenuTime", string.FormattedTime( (SysTime() - CurTime()) / 60, "%02i:%02i:%02i" ) )
+    ConsoleLine( "Time", os.date( "%H:%M:%S - %d/%m/%Y" , os.time() ) )
 end)
