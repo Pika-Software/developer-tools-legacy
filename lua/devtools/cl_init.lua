@@ -57,6 +57,17 @@ function NotNil( var, func, ... )
     func( ... )
 end
 
+local think_delay = CreateClientConVar( "dev_think_delay", "25", true, false, " - Time delay from gets new entity info.", 0, 1000 ):GetInt() / 100
+cvars.AddChangeCallback("dev_think_delay", function( name, old, new )
+    local new_int = tonumber( new )
+    if (new_int == nil) then
+        think_delay = 0
+        return
+    end
+
+    think_delay = new_int / 100
+end, addon_name)
+
 local new_axis = CreateClientConVar( "dev_axis_entity", "0", true, false, " - Enables new objet axis.", 0, 1 ):GetBool()
 cvars.AddChangeCallback("dev_axis_entity", function( name, old, new ) new_axis = new == "1" end, addon_name)
 
@@ -121,7 +132,11 @@ function Start()
             end
         end)
 
+        local nextThink = 0
         Hook( "Think", function()
+            if (nextThink > CurTime()) then return end
+            nextThink = CurTime() + think_delay
+
             table.Empty( all_data )
 
             local ent = ply:GetEyeTrace().Entity
@@ -163,6 +178,18 @@ function Start()
                     if health > 0 then
                         local maxhealth = ent:GetMaxHealth()
                         table.insert( all_data, { "Health", (health / maxhealth) * 100 .. "% (" .. health .. "/" .. maxhealth .. ")" } )
+                    end
+                end
+
+                if (ent.GetNWVarTable ~= nil) then
+                    local nw_data = {}
+                    for key, value in pairs( ent:GetNWVarTable() ) do
+                        table.insert( nw_data, { key, tostring( value ) } )
+                    end
+
+                    if not table.IsEmpty( nw_data ) then
+                        table.insert( all_data, "" )
+                        table.Add( all_data, nw_data )
                     end
                 end
 
@@ -426,7 +453,7 @@ end)
 
 concommand.Add("dev_info", function()
     ConsoleLine( "Title", "Dev Tools" )
-    ConsoleLine( "Version", "0.1.0" )
+    ConsoleLine( "Version", "0.2.0" )
     ConsoleLine( "Author", "PrikolMen:-b" )
     ConsoleLine( "CurTime", string.FormattedTime( CurTime() / 60, "%02i:%02i:%02i" ) )
     ConsoleLine( "SysTime", string.FormattedTime( SysTime() / 60, "%02i:%02i:%02i" ) )
