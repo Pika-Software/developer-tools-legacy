@@ -103,11 +103,11 @@ function Start()
 
         local pos = nil
         local ang = nil
+        local center = nil
         local all_data = {}
 
         local mins, maxs = nil, nil
         local forward, left, up = nil, nil, nil
-        local center = nil
         local color = nil
 
         local axis_len = ScreenScale( CreateClientConVar( "dev_axis_len", "3", true, false, " - Original axis length.", 0, 25 ):GetInt() )
@@ -141,45 +141,32 @@ function Start()
 
             local ent = ply:GetEyeTrace().Entity
             if (ent ~= nil) and (ent ~= NULL) then
-                if ent.EntIndex ~= nil then
-                    table.insert( all_data, { "Entity Index", ent:EntIndex() } )
+                table.insert( all_data, { "Entity Index", ent:EntIndex() } )
+                table.insert( all_data, { "Class", ent:GetClass() } )
+                table.insert( all_data, { "Model", ent:GetModel() } )
+
+                pos = ent:GetPos()
+                table.insert( all_data, { "Position", FormatVector( pos ) } )
+
+                ang = ent:GetAngles()
+                table.insert( all_data, { "Angles", FormatVector( ang ) } )
+
+                local vel = ent:GetVelocity()
+                table.insert( all_data, { "Velocity", FormatVector( vel ) } )
+                table.insert( all_data, { "Speed", round( vel:Length(), 2 ) } )
+
+                local health = ent:Health()
+                if (health > 0) then
+                    local maxhealth = ent:GetMaxHealth()
+                    table.insert( all_data, { "Health", (health / maxhealth) * 100 .. "% (" .. health .. "/" .. maxhealth .. ")" } )
                 end
 
-                if ent.GetClass ~= nil then
-                    table.insert( all_data, { "Class", ent:GetClass() } )
-                end
+                local plane_count = ent:GetBrushPlaneCount()
+                table.insert( all_data, { "Plane Count", plane_count } )
+                center = plane_count > 0 and ent:LocalToWorld( ent:OBBCenter() ) or pos
 
-                if ent.GetModel ~= nil then
-                    table.insert( all_data, { "Model", ent:GetModel() } )
-                end
-
-                if ent.GetPos == nil then
-                    pos = nil
-                else
-                    pos = ent:GetPos()
-                    table.insert( all_data, { "Position", FormatVector( pos ) } )
-                end
-
-                if ent.GetAngles == nil then
-                    ang = nil
-                else
-                    ang = ent:GetAngles()
-                    table.insert( all_data, { "Angles", FormatVector( ang ) } )
-                end
-
-                if ent.GetVelocity ~= nil then
-                    local vel = ent:GetVelocity()
-                    table.insert( all_data, { "Velocity", FormatVector( vel ) } )
-                    table.insert( all_data, { "Speed", round( vel:Length(), 2 ) } )
-                end
-
-                if (ent.Health ~= nil) and (ent.GetMaxHealth ~= nil) then
-                    local health = ent:Health()
-                    if health > 0 then
-                        local maxhealth = ent:GetMaxHealth()
-                        table.insert( all_data, { "Health", (health / maxhealth) * 100 .. "% (" .. health .. "/" .. maxhealth .. ")" } )
-                    end
-                end
+                color = ent:GetColor()
+                table.insert( all_data, { "Color", FormatVector( color ) } )
 
                 if (ent.GetNWVarTable ~= nil) then
                     local nw_data = {}
@@ -196,12 +183,6 @@ function Start()
                 table.insert( all_data, "" )
                 table.insert( all_data, { "Player Speed", round( ply:GetVelocity():Length(), 2 ) } )
 
-                if ent.GetColor == nil then
-                    color = nil
-                else
-                    color = ent:GetColor()
-                end
-
                 if ent.GetCollisionBounds == nil then
                     mins, maxs = nil, nil
                 else
@@ -216,34 +197,18 @@ function Start()
                     end
                 end
 
-                if ent.OBBCenter == nil then
-                   center = nil
-                else
-                    center = ent:OBBCenter()
-                    if center == nil then
-                        center = vector_zero
-                    end
-
-                    center:Rotate( ang )
-                    if ent.LocalToWorld == nil then
-                        center = center + pos
+                if new_axis then
+                    if IsValid( axis_helper ) then
+                        axis_helper:SetPos( pos )
+                        axis_helper:SetAngles( ang )
                     else
-                        center = ent:LocalToWorld( center )
+                        CreateAxis()
                     end
-
-                    if new_axis then
-                        if IsValid( axis_helper ) then
-                            axis_helper:SetPos( center )
-                            axis_helper:SetAngles( ang )
-                        else
-                            CreateAxis()
-                        end
-                    elseif IsValid( new_axis ) then
-                        new_axis:Remove()
-                    end
+                elseif IsValid( new_axis ) then
+                    new_axis:Remove()
                 end
 
-                if (new_axis) and (ang == nil) or (center == nil) then
+                if (new_axis) then
                     forward = nil
                     left = nil
                     up = nil
@@ -453,7 +418,7 @@ end)
 
 concommand.Add("dev_info", function()
     ConsoleLine( "Title", "Dev Tools" )
-    ConsoleLine( "Version", "0.2.0" )
+    ConsoleLine( "Version", "0.3.0" )
     ConsoleLine( "Author", "PrikolMen:-b" )
     ConsoleLine( "CurTime", string.FormattedTime( CurTime() / 60, "%02i:%02i:%02i" ) )
     ConsoleLine( "SysTime", string.FormattedTime( SysTime() / 60, "%02i:%02i:%02i" ) )
