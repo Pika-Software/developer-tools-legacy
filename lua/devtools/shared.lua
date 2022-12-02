@@ -1,8 +1,8 @@
 do
     module( "dev_tools", package.seeall )
 
-    SV = 0
-    CL = 1
+    SV = 1
+    CL = 2
     -- SH = SV + CL
 
     local modules = {}
@@ -12,8 +12,8 @@ do
 
     local function LoadWebModule( url, name, run_side )
         if run_side and (run_side < 2) then
-            if SERVER and run_side == 1 then return end
-            if CLIENT and run_side == 0 then return end
+            if SERVER and run_side == 2 then return end
+            if CLIENT and run_side == 1 then return end
         end
 
         local start = SysTime()
